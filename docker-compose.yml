@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  go-helloworld:
+    image: cr.yandex/crpui4gba34d6ts1hv80/helloworld
+    build: .
+    ports:
+      - 9094:9094
+    restart: "unless-stopped"
