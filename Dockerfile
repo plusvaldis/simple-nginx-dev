@@ -1,13 +1,10 @@
-FROM nginx:alpine
-
-RUN apk add --update --no-cache shadow
-RUN rm -rf /var/cache/apk/*
+FROM nginx
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 COPY static/ /usr/share/nginx/html/
 
-LABEL maintainer="Kunaev Nikita"
+LABEL maintainer="Cherepanov Vladislav"
 
 EXPOSE 80
 
