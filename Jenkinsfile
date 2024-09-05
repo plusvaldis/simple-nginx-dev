@@ -42,3 +42,125 @@ spec:
     - cat
     tty: true
 """
+
+
+pipeline {
+  agent any
+  stages {
+    stage('Run Docker') {
+      agent { kubernetes label: 'docker', yaml: "${DOCKER_POD}" }
+      stages {
+        stage('Build Docker Image') {
+          steps {
+            container('docker') {
+              sh "docker build -t ${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]} ."
+            }
+          }
+        }
+        stage('Push Image to Registry') {
+          steps {
+            container('docker') {
+              withCredentials([
+                usernamePassword(
+                  credentialsId: "${REGISTRY_CREDENTIALS}",
+                  usernameVariable: 'REGISTRY_USER', passwordVariable: 'REGISTRY_PASS'
+                )
+              ]) {
+                sh """
+                echo ${REGISTRY_PASS} | docker login ${REGISTRY_URL} -u ${REGISTRY_USER} --password-stdin
+                docker push ${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]}
+                docker tag ${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]} ${IMAGE_BRANCH_TAG}
+                docker push ${IMAGE_BRANCH_TAG}
+                """
+              }
+            }
+          }
+        }
+      }
+    }
+    stage('Deploy Master') {
+      when { branch 'master' }
+      agent { kubernetes label: 'kubectl', yaml: "${KUBECTL_POD}" }
+      stages {
+        stage('Deploy Image to Staging') {
+          steps {
+            container('kubectl') {
+              withCredentials([
+                file(
+                  credentialsId: "${CLUSTER_CREDENTIALS}",
+                  variable: 'KUBECONFIG'
+                ),
+                usernamePassword(
+                  credentialsId: "${REGISTRY_CREDENTIALS}",
+                  usernameVariable: 'REGISTRY_USER', passwordVariable: 'REGISTRY_PASS'
+                )
+              ]) {
+                sh """
+                kubectl \
+                -n ${STAGING_NAMESPACE} \
+                create secret docker-registry ${PULL_SECRET} \
+                --docker-server=${REGISTRY_URL} \
+                --docker-username=${REGISTRY_USER} \
+                --docker-password=${REGISTRY_PASS} \
+                --dry-run \
+                -o yaml \
+                | kubectl apply -f -
+
+                sed \
+                -e "s|{{NAMESPACE}}|${STAGING_NAMESPACE}|g" \
+                -e "s|{{PULL_IMAGE}}|${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]}|g" \
+                -e "s|{{PULL_SECRET}}|${PULL_SECRET}|g" \
+                ${KUBERNETES_MANIFEST} \
+                | kubectl apply -f -
+                """
+              }
+            }
+          }
+        }
+        stage('Manual Review') {
+          agent none
+          steps {
+            timeout(time:2, unit:'DAYS') {
+              input message: 'Deploy image to production?'
+            }
+          }
+        }
+        stage('Deploy Image to Production') {
+          steps {
+            container('kubectl') {
+              withCredentials([
+                file(
+                  credentialsId: "${CLUSTER_CREDENTIALS}",
+                  variable: 'KUBECONFIG'
+                ),
+                usernamePassword(
+                  credentialsId: "${REGISTRY_CREDENTIALS}",
+                  usernameVariable: 'REGISTRY_USER', passwordVariable: 'REGISTRY_PASS'
+                )
+              ]) {
+                sh """
+                kubectl \
+                -n ${PRODUCTION_NAMESPACE} \
+                create secret docker-registry ${PULL_SECRET} \
+                --docker-server=${REGISTRY_URL} \
+                --docker-username=${REGISTRY_USER} \
+                --docker-password=${REGISTRY_PASS} \
+                --dry-run \
+                -o yaml \
+                | kubectl apply -f -
+
+                sed \
+                -e "s|{{NAMESPACE}}|${PRODUCTION_NAMESPACE}|g" \
+                -e "s|{{PULL_IMAGE}}|${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]}|g" \
+                -e "s|{{PULL_SECRET}}|${PULL_SECRET}|g" \
+                ${KUBERNETES_MANIFEST} \
+                | kubectl apply -f -
+                """
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
