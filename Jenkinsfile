@@ -11,7 +11,7 @@ def CLUSTER_CREDENTIALS = 'e35d50c7-0dfa-4fe3-9c8b-990531d6a8f6'
 
 def KUBERNETES_MANIFEST = 'kubernetes-manifest.yaml'
 def STAGING_NAMESPACE = 'devops-tools'
-def PRODUCTION_NAMESPACE = 'default'
+def PRODUCTION_NAMESPACE = 'prod'
 def PULL_SECRET = "registry-${REGISTRY_CREDENTIALS}"
 
 def DOCKER_HOST_VALUE = 'tcp://dind.devops-tools.svc.cluster.local:2375'
