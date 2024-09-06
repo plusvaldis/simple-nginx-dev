@@ -1,13 +1,13 @@
 def REGISTRY_URL = 'cr.yandex'
-def OWNER = 'crpui4gba34d6ts1hv80'
+def OWNER = 'crpfvupvff8lra5lqkar'
 def REPO_NAME = 'simple-nginx-dev'
-def IMAGE_NAME = 'nginx-devops'
+def IMAGE_NAME = 'simple-nginx-dev'
 
 def IMAGE_REGISTRY = "${REGISTRY_URL}/${OWNER}/${REPO_NAME}/${IMAGE_NAME}"
 def IMAGE_BRANCH_TAG = "${IMAGE_REGISTRY}:${env.BRANCH_NAME}"
 
-def REGISTRY_CREDENTIALS = '3798a956-9159-49bc-894c-475852528da3'
-def CLUSTER_CREDENTIALS = '3fc7f4f2-5fdd-49fd-98e2-6773a0d4fa0d'
+def REGISTRY_CREDENTIALS = 'a0e287e8-42d4-4786-bc8f-88cb475dfc8d'
+def CLUSTER_CREDENTIALS = '	e35d50c7-0dfa-4fe3-9c8b-990531d6a8f6'
 
 def KUBERNETES_MANIFEST = 'kubernetes-manifest.yaml'
 def STAGING_NAMESPACE = 'devops-tools'
@@ -38,7 +38,7 @@ def KUBECTL_POD = """
 apiVersion: v1
 kind: Pod
 metadata:
-  name: kubectl
+  name: k8skubectl
   namespace: devops-tools
 spec:
   containers:
