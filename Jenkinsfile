@@ -34,6 +34,8 @@ spec:
 def KUBECTL_POD = """
 apiVersion: v1
 kind: Pod
+metadata:
+  name: kubectl
 spec:
   containers:
   - name: kubectl
