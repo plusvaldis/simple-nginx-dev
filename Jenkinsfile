@@ -86,7 +86,7 @@ pipeline {
     }
     stage('Deploy Master') {
       when { branch 'master' }
-      agent { kubernetes label: 'kubectl', yaml: "${KUBECTL_POD}" }
+      agent { kubernetes inheritFrom: 'kubectl', yaml: "${KUBECTL_POD}" }
       stages {
         stage('Deploy Image to Staging') {
           steps {
