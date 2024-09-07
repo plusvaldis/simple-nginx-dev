@@ -4,7 +4,7 @@ def REPO_NAME = 'simple-nginx-dev'
 def IMAGE_NAME = 'simple-nginx-dev'
 
 def IMAGE_REGISTRY = "${REGISTRY_URL}/${OWNER}/${REPO_NAME}/${IMAGE_NAME}"
-def IMAGE_BRANCH_TAG = "${IMAGE_REGISTRY}:${env.BRANCH_NAME}"
+def IMAGE_BRANCH_TAG = "${IMAGE_REGISTRY}:${env.TAG_NAME}"
 
 def REGISTRY_CREDENTIALS = 'a0e287e8-42d4-4786-bc8f-88cb475dfc8d'
 def CLUSTER_CREDENTIALS = 'e35d50c7-0dfa-4fe3-9c8b-990531d6a8f6'
@@ -68,8 +68,7 @@ pipeline {
               ]) {
                 sh """
                 echo ${REGISTRY_PASS} | docker login ${REGISTRY_URL} -u ${REGISTRY_USER} --password-stdin
-                docker push ${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]}
-                docker tag ${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]} ${IMAGE_BRANCH_TAG}
+                docker tag ${IMAGE_BRANCH_TAG}
                 docker push ${IMAGE_BRANCH_TAG}
                 """
               }
@@ -107,7 +106,7 @@ pipeline {
 
                 sed \
                 -e "s|{{NAMESPACE}}|${STAGING_NAMESPACE}|g" \
-                -e "s|{{PULL_IMAGE}}|${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]}|g" \
+                -e "s|{{PULL_IMAGE}}|${IMAGE_BRANCH_TAG}|g" \
                 -e "s|{{PULL_SECRET}}|${PULL_SECRET}|g" \
                 ${KUBERNETES_MANIFEST} \
                 | kubectl apply -f -
@@ -149,7 +148,7 @@ pipeline {
 
                 sed \
                 -e "s|{{NAMESPACE}}|${PRODUCTION_NAMESPACE}|g" \
-                -e "s|{{PULL_IMAGE}}|${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]}|g" \
+                -e "s|{{PULL_IMAGE}}|${IMAGE_BRANCH_TAG}|g" \
                 -e "s|{{PULL_SECRET}}|${PULL_SECRET}|g" \
                 ${KUBERNETES_MANIFEST} \
                 | kubectl apply -f -
