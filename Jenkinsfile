@@ -1,4 +1,5 @@
-def REGISTRY_URL = 'cr.yandex'
+def REGISTRY_URL = 'https://cr.yandex/'
+def REGISTRY_NAME = 'cr.yandex'
 def OWNER = 'crpfvupvff8lra5lqkar'
 def REPO_NAME = 'simple-nginx-dev'
 def IMAGE_NAME = 'simple-nginx-dev'
@@ -53,7 +54,7 @@ pipeline {
         stage('Build Docker Image') {
           steps {
             container('docker') {
-              sh "docker build -t ${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]} ."
+              sh "docker build -t ${IMAGE_BRANCH_TAG}.${env.TAG_NAME} ."
             }
           }
         }
@@ -67,8 +68,8 @@ pipeline {
                 )
               ]) {
                 sh """
-                echo ${REGISTRY_PASS} | docker login ${REGISTRY_URL} -u ${REGISTRY_USER} --password-stdin
-                docker tag ${IMAGE_BRANCH_TAG}
+                echo ${REGISTRY_PASS} | docker login ${REGISTRY_NAME} -u ${REGISTRY_USER} --password-stdin
+                docker tag ${env.TAG_NAME}
                 docker push ${IMAGE_BRANCH_TAG}
                 """
               }
