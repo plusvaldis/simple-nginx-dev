@@ -78,7 +78,7 @@ pipeline {
         }
       }
     }
-    stage('Deploy Master') {
+    stage('Deploy Test') {
       when { tag 'v*' }
       agent { kubernetes label: 'kubectl', yaml: "${KUBECTL_POD}" }
       stages {
@@ -119,7 +119,7 @@ pipeline {
         }
       }
     }
-    stage('Deploy Master') {
+    stage('Deploy Prod') {
       when { branch 'main' }
       agent { kubernetes label: 'kubectl', yaml: "${KUBECTL_POD}" }
       stages {
