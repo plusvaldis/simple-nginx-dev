@@ -36,7 +36,6 @@ spec:
         ports:
         - containerPort: 9094
         image: {{PULL_IMAGE}}
-        imagePullPolicy: IfNotPresent
         resources:
           limits:
             cpu: 200m
