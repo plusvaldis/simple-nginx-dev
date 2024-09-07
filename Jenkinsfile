@@ -79,7 +79,7 @@ pipeline {
       }
     }
     stage('Deploy Test') {
-      when { expression { sh([returnStdout: true, script: 'echo $TAG_NAME | tr -d \'\n\'']) } }
+      when { tag 'v1.0.0' }
       agent { kubernetes label: 'kubectl', yaml: "${KUBECTL_POD}" }
       stages {
         stage('Deploy Image to Staging') {
