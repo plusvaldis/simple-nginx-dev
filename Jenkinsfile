@@ -5,7 +5,7 @@ def REPO_NAME = 'simple-nginx-dev'
 def IMAGE_NAME = 'simple-nginx-dev'
 
 def IMAGE_REGISTRY = "${REGISTRY_URL}/${OWNER}/${REPO_NAME}/${IMAGE_NAME}"
-def IMAGE_BRANCH_TAG = "${IMAGE_REGISTRY}:${env.TAG_NAME}"
+def IMAGE_BRANCH_TAG = "${IMAGE_REGISTRY}:${github.event.main.tag_name}"
 
 def REGISTRY_CREDENTIALS = 'a0e287e8-42d4-4786-bc8f-88cb475dfc8d'
 def CLUSTER_CREDENTIALS = 'e35d50c7-0dfa-4fe3-9c8b-990531d6a8f6'
@@ -54,7 +54,7 @@ pipeline {
         stage('Build Docker Image') {
           steps {
             container('docker') {
-              sh "docker build -t ${IMAGE_BRANCH_TAG}.${env.TAG_NAME} ."
+              sh "docker build -t ${IMAGE_BRANCH_TAG} ."
             }
           }
         }
