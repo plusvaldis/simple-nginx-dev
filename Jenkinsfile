@@ -11,8 +11,7 @@ def REGISTRY_CREDENTIALS = 'a0e287e8-42d4-4786-bc8f-88cb475dfc8d'
 def CLUSTER_CREDENTIALS = 'e35d50c7-0dfa-4fe3-9c8b-990531d6a8f6'
 
 def KUBERNETES_MANIFEST = 'kubernetes-manifest.yaml'
-def STAGING_NAMESPACE = 'devops-tools'
-def PRODUCTION_NAMESPACE = 'prod'
+def PRODUCTION_NAMESPACE = 'devops-tools'
 def PULL_SECRET = "registry-${REGISTRY_CREDENTIALS}"
 
 def DOCKER_HOST_VALUE = 'tcp://dind.devops-tools.svc.cluster.local:2375'
@@ -84,46 +83,6 @@ pipeline {
         EXAMPLE_CREDS = credentials("${REGISTRY_CREDENTIALS}")
       }
       agent { kubernetes inheritFrom: 'kubectl', yaml: "${KUBECTL_POD}" }
-      stages {
-        stage('Deploy Image to Staging') {
-          steps {
-            container('kubectl') {
-              withCredentials([
-                file(
-                  credentialsId: "${CLUSTER_CREDENTIALS}",
-                  variable: 'KUBECONFIG'
-                )
-              ]) {
-                sh """
-                kubectl \
-                -n ${STAGING_NAMESPACE} \
-                create secret docker-registry ${PULL_SECRET} \
-                --docker-server=${REGISTRY_URL} \
-                --docker-username=${EXAMPLE_CREDS_USR} \
-                --docker-password=${EXAMPLE_CREDS_PSW} \
-                --dry-run \
-                -o yaml \
-                | kubectl apply -f -
-
-                sed \
-                -e "s|{{NAMESPACE}}|${STAGING_NAMESPACE}|g" \
-                -e "s|{{PULL_IMAGE}}|${IMAGE_BRANCH_TAG}|g" \
-                -e "s|{{PULL_SECRET}}|${PULL_SECRET}|g" \
-                ${KUBERNETES_MANIFEST} \
-                | kubectl apply -f -
-                """
-              }
-            }
-          }
-        }
-        stage('Manual Review') {
-          agent none
-          steps {
-            timeout(time:2, unit:'DAYS') {
-              input message: 'Deploy image to production?'
-            }
-          }
-        }
         stage('Deploy Image to Production') {
           environment {
           EXAMPLE_CREDS = credentials("${REGISTRY_CREDENTIALS}")
