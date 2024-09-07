@@ -78,7 +78,7 @@ pipeline {
       }
     }
     stage('Deploy Master') {
-      when { branch 'main' }
+      when { expression { sh([returnStdout: true, script: 'echo $TAG_NAME | tr -d \'\n\'']) } }
       environment {
         EXAMPLE_CREDS = credentials("${REGISTRY_CREDENTIALS}")
       }
