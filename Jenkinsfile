@@ -4,7 +4,7 @@ def OWNER = 'crpfvupvff8lra5lqkar'
 def REPO_NAME = 'simple-nginx-dev'
 def IMAGE_NAME = 'simple-nginx-dev'
 
-def IMAGE_REGISTRY = "${REGISTRY_URL}/${OWNER}/${REPO_NAME}/${IMAGE_NAME}"
+def IMAGE_REGISTRY = "${REGISTRY_NAME}/${OWNER}/${REPO_NAME}/${IMAGE_NAME}"
 def IMAGE_BRANCH_TAG = "${IMAGE_REGISTRY}:${env.BRANCH_NAME}"
 
 def REGISTRY_CREDENTIALS = 'a0e287e8-42d4-4786-bc8f-88cb475dfc8d'
