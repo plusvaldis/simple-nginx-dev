@@ -79,20 +79,19 @@ pipeline {
     }
     stage('Deploy Master') {
       when { branch 'main' }
-      environment {
-        EXAMPLE_CREDS = credentials("${REGISTRY_CREDENTIALS}")
-      }
-      agent { kubernetes inheritFrom: 'kubectl', yaml: "${KUBECTL_POD}" }
+      agent { kubernetes label: 'kubectl', yaml: "${KUBECTL_POD}" }
+      stages {
         stage('Deploy Image to Production') {
-          environment {
-          EXAMPLE_CREDS = credentials("${REGISTRY_CREDENTIALS}")
-          }
           steps {
             container('kubectl') {
               withCredentials([
                 file(
                   credentialsId: "${CLUSTER_CREDENTIALS}",
                   variable: 'KUBECONFIG'
+                ),
+                usernamePassword(
+                  credentialsId: "${REGISTRY_CREDENTIALS}",
+                  usernameVariable: 'REGISTRY_USER', passwordVariable: 'REGISTRY_PASS'
                 )
               ]) {
                 sh """
@@ -100,15 +99,15 @@ pipeline {
                 -n ${PRODUCTION_NAMESPACE} \
                 create secret docker-registry ${PULL_SECRET} \
                 --docker-server=${REGISTRY_URL} \
-                --docker-username=${EXAMPLE_CREDS_USR} \
-                --docker-password=${EXAMPLE_CREDS_PSW} \
+                --docker-username=${REGISTRY_USER} \
+                --docker-password=${REGISTRY_PASS} \
                 --dry-run \
                 -o yaml \
                 | kubectl apply -f -
-
+  
                 sed \
                 -e "s|{{NAMESPACE}}|${PRODUCTION_NAMESPACE}|g" \
-                -e "s|{{PULL_IMAGE}}|${IMAGE_BRANCH_TAG}|g" \
+                -e "s|{{PULL_IMAGE}}|${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]}|g" \
                 -e "s|{{PULL_SECRET}}|${PULL_SECRET}|g" \
                 ${KUBERNETES_MANIFEST} \
                 | kubectl apply -f -
