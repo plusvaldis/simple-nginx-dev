@@ -8,10 +8,12 @@ metadata:
 spec:
   ports:
   - name: http
-    port: 9094
-    targetPort: 9094
+    port: 80
+    targetPort: 80
+    nodePort: 32080
   selector:
     app: helloworld
+  type: NodePort
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -34,7 +36,7 @@ spec:
       containers:
       - name: helloworld
         ports:
-        - containerPort: 9094
+        - containerPort: 80
         image: {{PULL_IMAGE}}
         resources:
           limits:
