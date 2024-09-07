@@ -5,7 +5,7 @@ def REPO_NAME = 'simple-nginx-dev'
 def IMAGE_NAME = 'simple-nginx-dev'
 
 def IMAGE_REGISTRY = "${REGISTRY_URL}/${OWNER}/${REPO_NAME}/${IMAGE_NAME}"
-def IMAGE_BRANCH_TAG = "${IMAGE_REGISTRY}:${github.event.main.tag_name}"
+def IMAGE_BRANCH_TAG = "${IMAGE_REGISTRY}:${env.BRANCH_NAME}"
 
 def REGISTRY_CREDENTIALS = 'a0e287e8-42d4-4786-bc8f-88cb475dfc8d'
 def CLUSTER_CREDENTIALS = 'e35d50c7-0dfa-4fe3-9c8b-990531d6a8f6'
@@ -69,7 +69,7 @@ pipeline {
               ]) {
                 sh """
                 echo ${REGISTRY_PASS} | docker login ${REGISTRY_NAME} -u ${REGISTRY_USER} --password-stdin
-                docker tag ${env.TAG_NAME}
+                docker tag ${IMAGE_BRANCH_TAG}
                 docker push ${IMAGE_BRANCH_TAG}
                 """
               }
