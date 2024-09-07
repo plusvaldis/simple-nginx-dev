@@ -54,7 +54,7 @@ pipeline {
         stage('Build Docker Image') {
           steps {
             container('docker') {
-              sh "docker build -t ${IMAGE_BRANCH_TAG} ."
+              sh "docker build -t ${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]} ."
             }
           }
         }
@@ -69,7 +69,7 @@ pipeline {
               ]) {
                 sh """
                 echo ${REGISTRY_PASS} | docker login ${REGISTRY_NAME} -u ${REGISTRY_USER} --password-stdin
-                docker tag ${IMAGE_BRANCH_TAG}
+                docker tag ${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]} ${IMAGE_BRANCH_TAG}
                 docker push ${IMAGE_BRANCH_TAG}
                 """
               }
