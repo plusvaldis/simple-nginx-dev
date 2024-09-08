@@ -53,7 +53,7 @@ pipeline {
     stage('Run Docker') {
       agent { kubernetes inheritFrom: 'docker', yaml: "${DOCKER_POD}" }
       stages {
-        stage('Build Docker Image for Prod') {
+        stage('Build Docker Image') {
           steps {
             container('docker') {
               sh "docker build -t ${IMAGE_BRANCH_TAG} ."
