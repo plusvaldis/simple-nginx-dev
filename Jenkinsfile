@@ -60,7 +60,7 @@ pipeline {
             }
           }
         }
-        stage('Push Image to Registry for STAGING') {
+        stage('Push Image to Registry for PROD') {
           when { tag 'v*' }
           steps {
             container('docker') {
@@ -79,7 +79,7 @@ pipeline {
             }
           }
         }
-        stage('Push Image to Registry for PRODUCTION') {
+        stage('Push Image to Registry for STAGING') {
           when { branch 'main' }
           steps {
             container('docker') {
@@ -100,11 +100,11 @@ pipeline {
         }
       }
     }
-    stage('Deploy Test') {
+    stage('Deploy Prod') {
       when { tag 'v*' }
       agent { kubernetes label: 'kubectl', yaml: "${KUBECTL_POD}" }
       stages {
-        stage('Deploy Image to Staging') {
+        stage('Deploy Image to PRODUCTION') {
           steps {
             container('kubectl') {
               withCredentials([
@@ -119,7 +119,7 @@ pipeline {
               ]) {
                 sh """
                 kubectl \
-                -n ${STAGING_NAMESPACE} \
+                -n ${PRODUCTION_NAMESPACE} \
                 create secret docker-registry ${PULL_SECRET} \
                 --docker-server=${REGISTRY_URL} \
                 --docker-username=${REGISTRY_USER} \
@@ -129,10 +129,10 @@ pipeline {
                 | kubectl apply -f -
 
                 sed \
-                -e "s|{{NAMESPACE}}|${STAGING_NAMESPACE}|g" \
+                -e "s|{{NAMESPACE}}|${PRODUCTION_NAMESPACE}|g" \
                 -e "s|{{PULL_IMAGE}}|${IMAGE_BRANCH_TAG}|g" \
                 -e "s|{{PULL_SECRET}}|${PULL_SECRET}|g" \
-                -e "s|{{PORT}}|${STAGING_PORT}|g" \
+                -e "s|{{PORT}}|${PRODUCTION_PORT}|g" \
                 ${KUBERNETES_MANIFEST} \
                 | kubectl apply -f -
                 """
@@ -142,11 +142,11 @@ pipeline {
         }
       }
     }
-    stage('Deploy Prod') {
+    stage('Deploy STAGING') {
       when { branch 'main' }
       agent { kubernetes label: 'kubectl', yaml: "${KUBECTL_POD}" }
       stages {
-        stage('Deploy Image to Production') {
+        stage('Deploy Image to STAGING') {
           steps {
             container('kubectl') {
               withCredentials([
@@ -171,10 +171,10 @@ pipeline {
                 | kubectl apply -f -
   
                 sed \
-                -e "s|{{NAMESPACE}}|${PRODUCTION_NAMESPACE}|g" \
+                -e "s|{{NAMESPACE}}|${STAGING_NAMESPACE}|g" \
                 -e "s|{{PULL_IMAGE}}|${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]}|g" \
                 -e "s|{{PULL_SECRET}}|${PULL_SECRET}|g" \
-                -e "s|{{PORT}}|${PRODUCTION_PORT}|g" \
+                -e "s|{{PORT}}|${STAGING_PORT}|g" \
                 ${KUBERNETES_MANIFEST} \
                 | kubectl apply -f -
                 """
