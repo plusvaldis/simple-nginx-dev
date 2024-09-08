@@ -53,14 +53,15 @@ pipeline {
     stage('Run Docker') {
       agent { kubernetes inheritFrom: 'docker', yaml: "${DOCKER_POD}" }
       stages {
-        stage('Build Docker Image') {
+        stage('Build Docker Image for Prod') {
           steps {
             container('docker') {
               sh "docker build -t ${IMAGE_BRANCH_TAG} ."
             }
           }
         }
-        stage('Push Image to Registry') {
+        stage('Push Image to Registry for STAGING') {
+          when { tag 'v*' }
           steps {
             container('docker') {
               withCredentials([
@@ -73,6 +74,25 @@ pipeline {
                 echo ${REGISTRY_PASS} | docker login ${REGISTRY_NAME} -u ${REGISTRY_USER} --password-stdin
                 docker tag ${IMAGE_BRANCH_TAG} ${IMAGE_BRANCH_TAG}
                 docker push ${IMAGE_BRANCH_TAG}
+                """
+              }
+            }
+          }
+        }
+        stage('Push Image to Registry for PRODUCTION') {
+          when { branch 'main' }
+          steps {
+            container('docker') {
+              withCredentials([
+                usernamePassword(
+                  credentialsId: "${REGISTRY_CREDENTIALS}",
+                  usernameVariable: 'REGISTRY_USER', passwordVariable: 'REGISTRY_PASS'
+                )
+              ]) {
+                sh """
+                echo ${REGISTRY_PASS} | docker login ${REGISTRY_URL} -u ${REGISTRY_USER} --password-stdin
+                docker tag ${IMAGE_BRANCH_TAG} ${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]}
+                docker push ${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]}
                 """
               }
             }
@@ -110,7 +130,7 @@ pipeline {
 
                 sed \
                 -e "s|{{NAMESPACE}}|${STAGING_NAMESPACE}|g" \
-                -e "s|{{PULL_IMAGE}}|${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]}|g" \
+                -e "s|{{PULL_IMAGE}}|${IMAGE_BRANCH_TAG}|g" \
                 -e "s|{{PULL_SECRET}}|${PULL_SECRET}|g" \
                 -e "s|{{PORT}}|${STAGING_PORT}|g" \
                 ${KUBERNETES_MANIFEST} \
@@ -152,7 +172,7 @@ pipeline {
   
                 sed \
                 -e "s|{{NAMESPACE}}|${PRODUCTION_NAMESPACE}|g" \
-                -e "s|{{PULL_IMAGE}}|${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]}|g" \
+                -e "s|{{PULL_IMAGE}}|${IMAGE_BRANCH_TAG}|g" \
                 -e "s|{{PULL_SECRET}}|${PULL_SECRET}|g" \
                 -e "s|{{PORT}}|${PRODUCTION_PORT}|g" \
                 ${KUBERNETES_MANIFEST} \
