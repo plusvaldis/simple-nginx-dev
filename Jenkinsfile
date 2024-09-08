@@ -13,6 +13,8 @@ def CLUSTER_CREDENTIALS = 'e35d50c7-0dfa-4fe3-9c8b-990531d6a8f6'
 def KUBERNETES_MANIFEST = 'kubernetes-manifest.yaml'
 def PRODUCTION_NAMESPACE = 'prod'
 def STAGING_NAMESPACE = 'devops-tools'
+def STAGING_PORT = "32081"
+def PRODUCTION_PORT = "32080"
 def PULL_SECRET = "registry-${REGISTRY_CREDENTIALS}"
 
 def DOCKER_HOST_VALUE = 'tcp://dind.devops-tools.svc.cluster.local:2375'
@@ -79,7 +81,7 @@ pipeline {
       }
     }
     stage('Deploy Test') {
-      when { tag 'v1.0.0' }
+      when { tag 'v*' }
       agent { kubernetes label: 'kubectl', yaml: "${KUBECTL_POD}" }
       stages {
         stage('Deploy Image to Staging') {
@@ -110,6 +112,7 @@ pipeline {
                 -e "s|{{NAMESPACE}}|${STAGING_NAMESPACE}|g" \
                 -e "s|{{PULL_IMAGE}}|${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]}|g" \
                 -e "s|{{PULL_SECRET}}|${PULL_SECRET}|g" \
+                -e "s|{{PORT}}|${STAGING_PORT}|g" \
                 ${KUBERNETES_MANIFEST} \
                 | kubectl apply -f -
                 """
@@ -151,6 +154,7 @@ pipeline {
                 -e "s|{{NAMESPACE}}|${PRODUCTION_NAMESPACE}|g" \
                 -e "s|{{PULL_IMAGE}}|${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]}|g" \
                 -e "s|{{PULL_SECRET}}|${PULL_SECRET}|g" \
+                -e "s|{{PORT}}|${PRODUCTION_PORT}|g" \
                 ${KUBERNETES_MANIFEST} \
                 | kubectl apply -f -
                 """
