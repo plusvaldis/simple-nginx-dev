@@ -10,7 +10,7 @@ spec:
   - name: http
     port: 80
     targetPort: 80
-    nodePort: 32080
+    nodePort: {{PORT}}
   selector:
     app: helloworld
   type: NodePort

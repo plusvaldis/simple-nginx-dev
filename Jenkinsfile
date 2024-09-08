@@ -110,7 +110,7 @@ pipeline {
 
                 sed \
                 -e "s|{{NAMESPACE}}|${STAGING_NAMESPACE}|g" \
-                -e "s|{{PULL_IMAGE}}|${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]}|g" \
+                -e "s|{{PULL_IMAGE}}|${IMAGE_BRANCH_TAG}}|g" \
                 -e "s|{{PULL_SECRET}}|${PULL_SECRET}|g" \
                 -e "s|{{PORT}}|${STAGING_PORT}|g" \
                 ${KUBERNETES_MANIFEST} \
@@ -152,7 +152,7 @@ pipeline {
   
                 sed \
                 -e "s|{{NAMESPACE}}|${PRODUCTION_NAMESPACE}|g" \
-                -e "s|{{PULL_IMAGE}}|${IMAGE_BRANCH_TAG}.${env.GIT_COMMIT[0..6]}|g" \
+                -e "s|{{PULL_IMAGE}}|${IMAGE_BRANCH_TAG}|g" \
                 -e "s|{{PULL_SECRET}}|${PULL_SECRET}|g" \
                 -e "s|{{PORT}}|${PRODUCTION_PORT}|g" \
                 ${KUBERNETES_MANIFEST} \
